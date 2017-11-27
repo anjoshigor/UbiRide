@@ -31,4 +31,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     compile 'com.google.android.gms:play-services-awareness:11.6.0'
+    compile 'com.google.android.gms:play-services-nearby:11.6.0'
+    compile 'com.google.android.gms:play-services-maps:11.6.0'
 }
