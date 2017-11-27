@@ -31,6 +31,7 @@ import android.support.v4.app.ActivityCompat
 import com.google.android.gms.awareness.SnapshotClient
 import com.google.android.gms.awareness.snapshot.DetectedActivityResult
 import com.google.android.gms.location.DetectedActivity
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -118,7 +119,7 @@ class MainActivity : AppCompatActivity() {
 
         val walkingFence = DetectedActivityFence.during(DetectedActivityFence.WALKING)
         val headphoneFence = HeadphoneFence.during(HeadphoneState.PLUGGED_IN)
-        val timeFence = TimeFence.inDailyInterval(null, 0L, 70080000)
+        val timeFence = TimeFence.inDailyInterval(TimeZone.getDefault(), 0L, 24 * 60L * 60L * 1000L)
 
         handleLocationFence()
 
@@ -188,6 +189,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     protected fun registerFence(fenceKey: String, fence: AwarenessFence) {
+        Log.i(TAG, "Trying to register $fenceKey ...")
+
+        Awareness.getFenceClient(this).updateFences(
+                FenceUpdateRequest.Builder().addFence(fenceKey, fence, mFencePendingIntent)
+                        .build()).addOnSuccessListener {
+            Log.i(TAG, "Fence {$fenceKey} was successfully registered.")
+        }.addOnFailureListener { status ->
+
+            Log.e(TAG, "Fence {$fenceKey} could not be registered: $status")
+        }
+
+/*
         Awareness.FenceApi.updateFences(
                 mGoogleApiClient,
                 FenceUpdateRequest.Builder()
@@ -201,7 +214,7 @@ class MainActivity : AppCompatActivity() {
                             Log.e(TAG, "Fence {$fenceKey} could not be registered: " + status)
                         }
                     }
-                })
+                })*/
     }
 
     protected fun unregisterFence(fenceKey: String, fence: AwarenessFence) {
@@ -213,9 +226,9 @@ class MainActivity : AppCompatActivity() {
                 .setResultCallback(object : ResultCallback<Status> {
                     override fun onResult(status: Status) {
                         if (status.isSuccess()) {
-                            Log.i(TAG, "Fence was successfully unregistered.")
+                            Log.i(TAG, "Fence {$fenceKey} was successfully unregistered.")
                         } else {
-                            Log.e(TAG, "Fence could not be unregistered: " + status)
+                            Log.e(TAG, "Fence {$fenceKey} could not be unregistered: " + status)
                         }
                     }
                 })
@@ -279,7 +292,7 @@ class MainActivity : AppCompatActivity() {
 
         override fun onReceive(context: Context?, intent: Intent?) {
             var state: FenceState = FenceState.extract(intent)
-            Log.d("Awareness", "Fence Receiver Received")
+            Log.d("Awareness", "Fence Receiver Received from")
 
 
             when (state.currentState) {
