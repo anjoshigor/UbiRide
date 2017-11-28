@@ -30,6 +30,7 @@ import android.support.v4.app.ActivityCompat
 import com.google.android.gms.awareness.FenceClient
 import com.google.android.gms.awareness.SnapshotClient
 import com.google.android.gms.awareness.snapshot.DetectedActivityResult
+import com.google.android.gms.awareness.state.Weather
 import com.google.android.gms.location.DetectedActivity
 import java.util.*
 
@@ -38,7 +39,6 @@ class MainActivity : AppCompatActivity() {
 
     private val FENCE_RECEIVER_ACTION = "FENCE_RECEIVE"
     private lateinit var mFencePendingIntent: PendingIntent
-    private lateinit var mGoogleApiClient: GoogleApiClient
     private val TAG = "Awareness"
     private lateinit var mMyFenceReceiver: InternalLocationBroadCastReceiver
     private val PERMISSION_REQUEST_ACCESS_FINE_LOCATION = 940
@@ -59,18 +59,10 @@ class MainActivity : AppCompatActivity() {
             1 to "Dia de Semana"
     )
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        mGoogleApiClient = GoogleApiClient.Builder(this)
-                .addApi(Awareness.API)
-                .addApi(Nearby.CONNECTIONS_API)
-                .addApi(Nearby.MESSAGES_API)
-                .useDefaultAccount()
-                .build()
-
-        mGoogleApiClient.connect()
 
 
         headphone.setOnClickListener {
@@ -89,8 +81,6 @@ class MainActivity : AppCompatActivity() {
         location.setOnClickListener {
             getLocation()
         }
-
-
         activity.setOnClickListener {
             var snapshotClient = Awareness.getSnapshotClient(this)
             snapshotClient.detectedActivity.addOnSuccessListener { activityResponse ->
@@ -100,8 +90,6 @@ class MainActivity : AppCompatActivity() {
                 activitytext.text = status.message
             }
         }
-
-
         time.setOnClickListener {
             var snapshotClient = Awareness.getSnapshotClient(this)
             try {
@@ -117,7 +105,9 @@ class MainActivity : AppCompatActivity() {
                 Log.e(TAG, ex.message)
             }
         }
-
+        weather.setOnClickListener {
+            getWeather()
+        }
 
         val intent = Intent(FENCE_RECEIVER_ACTION)
         mFencePendingIntent = PendingIntent.getBroadcast(this,
@@ -188,6 +178,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun getWeather() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    Array(1, { Manifest.permission.ACCESS_FINE_LOCATION }),
+                    PERMISSION_REQUEST_ACCESS_FINE_LOCATION)
+        } else {
+
+            Awareness.getSnapshotClient(this).weather.addOnSuccessListener { weatherResponse ->
+                val humidade = weatherResponse.weather.humidity
+                val temperatura = weatherResponse.weather.getFeelsLikeTemperature(Weather.CELSIUS)
+                weathertext.text = "Humidade: ${humidade}%\nTemperatura: ${temperatura}ºC"
+            }.addOnFailureListener { status ->
+                weathertext.text = status.message
+            }
+        }
+    }
+
     fun getActivityString(type: Int): String {
         when (type) {
             DetectedActivity.IN_VEHICLE ->
@@ -231,7 +239,7 @@ class MainActivity : AppCompatActivity() {
             //LANCAR NOTIFICACAO
             when (key) {
                 "headphonekey" -> {
-//                    phonetext.text = "Headphone não está plugado"
+                    phonetext.text = "Headphone não está plugado"
                     Toast.makeText(context, "Não está mais com o fone", Toast.LENGTH_LONG).show()
                 }
                 "walkingkey" -> {
@@ -243,11 +251,11 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(context, "Não está mais em veículo", Toast.LENGTH_LONG).show()
                 }
                 "homekey", "cikey" -> {
-//                    locationtext.text = "Não está em um local conhecido"
+                    locationtext.text = "Não está em um local conhecido"
                     Toast.makeText(context, "Não está mais em casa", Toast.LENGTH_LONG).show()
                 }
                 "timefencekey" -> {
-//                    timetext.text = "Não está no horário determinado"
+                    timetext.text = "Não está no horário determinado"
                     Toast.makeText(context, "Não está no horário determinado", Toast.LENGTH_LONG).show()
                 }
                 else -> {

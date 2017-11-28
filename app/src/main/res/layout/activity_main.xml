@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="@dimen/place_autocomplete_powered_by_google_height"
+    android:layout_marginLeft="@dimen/place_autocomplete_powered_by_google_height"
+    android:layout_marginRight="@dimen/place_autocomplete_powered_by_google_height"
     tools:context="com.anjoshigor.ubiride.MainActivity">
 
     <LinearLayout
@@ -48,11 +49,22 @@
             android:padding="18dp"
             android:text="Horário" />
 
+        <Button
+            android:id="@+id/weather"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:padding="18dp"
+            android:text="Clima" />
+
         <TextView
             android:id="@+id/phonetext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:drawableLeft="@drawable/ic_headset_black_24dp"
+            android:drawableTint="@color/colorAccent"
             android:fontFamily="sans-serif-condensed"
             android:text=""
             android:textSize="18sp" />
@@ -62,6 +74,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:drawableLeft="@drawable/ic_transfer_within_a_station_black_24dp"
+            android:drawableTint="@color/colorAccent"
             android:fontFamily="sans-serif-condensed"
             android:text=""
             android:textSize="18sp" />
@@ -71,6 +85,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:drawableLeft="@drawable/ic_explore_black_24dp"
+            android:drawableTint="@color/colorAccent"
             android:fontFamily="sans-serif-condensed"
             android:text=""
             android:textSize="18sp" />
@@ -81,9 +97,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:drawableLeft="@drawable/ic_timer_black_24dp"
+            android:drawableTint="@color/colorAccent"
+            android:fontFamily="sans-serif-condensed"
+            android:text=""
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/weathertext"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:drawableLeft="@drawable/ic_cloud_black_24dp"
+            android:drawableTint="@color/colorAccent"
             android:fontFamily="sans-serif-condensed"
             android:text=""
             android:textSize="18sp" />
 
     </LinearLayout>
-</android.support.constraint.ConstraintLayout>
+</android.support.v4.widget.NestedScrollView>
