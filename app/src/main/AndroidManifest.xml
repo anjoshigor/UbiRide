@@ -29,12 +29,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+<!--
         <receiver android:name=".LocationBroadCastReceiver">
             <intent-filter>
                 <action android:name="FENCE_RECEIVE"/>
             </intent-filter>
-        </receiver>
+        </receiver>-->
     </application>
 
 </manifest>

@@ -12,7 +12,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.content.pm.PackageManager.*
 import android.widget.Button
 import android.widget.Toast
@@ -28,6 +27,7 @@ import com.google.android.gms.location.places.ui.PlaceAutocomplete.getStatus
 import com.google.android.gms.awareness.snapshot.HeadphoneStateResult
 import android.support.annotation.NonNull
 import android.support.v4.app.ActivityCompat
+import com.google.android.gms.awareness.FenceClient
 import com.google.android.gms.awareness.SnapshotClient
 import com.google.android.gms.awareness.snapshot.DetectedActivityResult
 import com.google.android.gms.location.DetectedActivity
@@ -41,13 +41,23 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mGoogleApiClient: GoogleApiClient
     private val TAG = "Awareness"
     private lateinit var mMyFenceReceiver: InternalLocationBroadCastReceiver
-    lateinit var headphoneButton: Button
-    lateinit var locationButton: Button
-    lateinit var activityButton: Button
-    lateinit var timeButton: Button
-    lateinit var mainText: TextView
     private val PERMISSION_REQUEST_ACCESS_FINE_LOCATION = 940
 
+
+    lateinit var walkingFence: AwarenessFence
+    lateinit var vehicleFence: AwarenessFence
+    lateinit var stillFence: AwarenessFence
+    lateinit var headphoneFence: AwarenessFence
+
+    private var dict = mapOf(
+            6 to "Começo da noite",
+            5 to "Tarde",
+            4 to "Manhã",
+            3 to "Feriado",
+            2 to "Final de Semana",
+            7 to "Tarde da noite",
+            1 to "Dia de Semana"
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,47 +72,46 @@ class MainActivity : AppCompatActivity() {
 
         mGoogleApiClient.connect()
 
-        mainText = findViewById(R.id.maintext)
-        headphoneButton = findViewById(R.id.headphone)
-        headphoneButton.setOnClickListener {
+
+        headphone.setOnClickListener {
             var snapshotClient = Awareness.getSnapshotClient(this)
             snapshotClient.headphoneState.addOnSuccessListener { headphoneStateResponse ->
                 if (headphoneStateResponse.headphoneState.state == HeadphoneState.PLUGGED_IN) {
-                    mainText.text = "Headphone Plugado"
+                    phonetext.text = "Headphone Plugado"
                 } else {
-                    mainText.text = "HeadPhone Desplugado"
+                    phonetext.text = "HeadPhone Desplugado"
                 }
 
             }.addOnFailureListener { status ->
                 Log.e(TAG, status.message)
             }
         }
-
-        locationButton = findViewById(R.id.location)
-        locationButton.setOnClickListener {
+        location.setOnClickListener {
             getLocation()
         }
 
-        activityButton = findViewById(R.id.activity)
-        activityButton.setOnClickListener {
+
+        activity.setOnClickListener {
             var snapshotClient = Awareness.getSnapshotClient(this)
             snapshotClient.detectedActivity.addOnSuccessListener { activityResponse ->
                 var activity = activityResponse.activityRecognitionResult.mostProbableActivity
-                mainText.text = getActivityString(activity.type)
+                activitytext.text = getActivityString(activity.type)
             }.addOnFailureListener { status ->
-                mainText.text = status.message
+                activitytext.text = status.message
             }
         }
 
-        timeButton = findViewById(R.id.time)
-        timeButton.setOnClickListener {
+
+        time.setOnClickListener {
             var snapshotClient = Awareness.getSnapshotClient(this)
             try {
                 snapshotClient.timeIntervals.addOnSuccessListener { timeResponse ->
                     var time = timeResponse.timeIntervals.timeIntervals
-                    mainText.text = time[0].toString()
+                    var text = ""
+                    time.forEach { t -> text += " " + dict[t] }
+                    timetext.text = text
                 }.addOnFailureListener { status ->
-                    mainText.text = status.message
+                    timetext.text = status.message
                 }
             } catch (ex: SecurityException) {
                 Log.e(TAG, ex.message)
@@ -116,21 +125,36 @@ class MainActivity : AppCompatActivity() {
                 intent,
                 0)
 
+        walkingFence = DetectedActivityFence.during(DetectedActivityFence.WALKING)
+        vehicleFence = DetectedActivityFence.during(DetectedActivityFence.IN_VEHICLE)
+        stillFence = DetectedActivityFence.during(DetectedActivityFence.STILL)
+        headphoneFence = HeadphoneFence.during(HeadphoneState.PLUGGED_IN)
 
-        val walkingFence = DetectedActivityFence.during(DetectedActivityFence.WALKING)
-        val headphoneFence = HeadphoneFence.during(HeadphoneState.PLUGGED_IN)
-        val timeFence = TimeFence.inDailyInterval(TimeZone.getDefault(), 0L, 24 * 60L * 60L * 1000L)
-
+        handleTimeFence()
         handleLocationFence()
 
-        registerFence("timefencekey", timeFence)
         registerFence("walkingkey", walkingFence)
+        registerFence("vehiclekey", vehicleFence)
+        registerFence("stillkey", stillFence)
         registerFence("headphonekey", headphoneFence)
 
         mMyFenceReceiver = InternalLocationBroadCastReceiver()
         registerReceiver(mMyFenceReceiver, IntentFilter(FENCE_RECEIVER_ACTION))
 
 
+    }
+
+    fun handleTimeFence() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    Array(1, { Manifest.permission.ACCESS_FINE_LOCATION }),
+                    PERMISSION_REQUEST_ACCESS_FINE_LOCATION)
+        } else {
+            val timeFence = TimeFence.inTimeInterval(TimeFence.TIME_INTERVAL_MORNING)
+            registerFence("timefencekey", timeFence)
+
+        }
     }
 
     fun handleLocationFence() {
@@ -142,7 +166,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             var homeFence = LocationFence.`in`(-7.155978, -34.830320, 50.0, 10)
             homeFence = AwarenessFence.or(homeFence, LocationFence.entering(-7.155978, -34.830320, 50.0))
-            homeFence = AwarenessFence.or(homeFence, LocationFence.exiting(-7.155978, -34.830320, 50.0))
             registerFence("homekey", homeFence)
         }
     }
@@ -158,13 +181,12 @@ class MainActivity : AppCompatActivity() {
 
             snapshotClient.location.addOnSuccessListener { locationResponse ->
                 var location = locationResponse.location
-                mainText.text = "Latitude: {${location.latitude}} \n Longitude: {${location.longitude}}"
+                locationtext.text = "Latitude: ${location.latitude} \n Longitude: ${location.longitude}"
             }.addOnFailureListener { status ->
-                mainText.text = status.message
+                locationtext.text = status.message
             }
         }
     }
-
 
     fun getActivityString(type: Int): String {
         when (type) {
@@ -199,41 +221,7 @@ class MainActivity : AppCompatActivity() {
 
             Log.e(TAG, "Fence {$fenceKey} could not be registered: $status")
         }
-
-/*
-        Awareness.FenceApi.updateFences(
-                mGoogleApiClient,
-                FenceUpdateRequest.Builder()
-                        .addFence(fenceKey, fence, mFencePendingIntent)
-                        .build())
-                .setResultCallback(object : ResultCallback<Status> {
-                    override fun onResult(status: Status) {
-                        if (status.isSuccess) {
-                            Log.i(TAG, "Fence {$fenceKey} was successfully registered.")
-                        } else {
-                            Log.e(TAG, "Fence {$fenceKey} could not be registered: " + status)
-                        }
-                    }
-                })*/
     }
-
-    protected fun unregisterFence(fenceKey: String, fence: AwarenessFence) {
-        Awareness.FenceApi.updateFences(
-                mGoogleApiClient,
-                FenceUpdateRequest.Builder()
-                        .removeFence(fenceKey)
-                        .build())
-                .setResultCallback(object : ResultCallback<Status> {
-                    override fun onResult(status: Status) {
-                        if (status.isSuccess()) {
-                            Log.i(TAG, "Fence {$fenceKey} was successfully unregistered.")
-                        } else {
-                            Log.e(TAG, "Fence {$fenceKey} could not be unregistered: " + status)
-                        }
-                    }
-                })
-    }
-
 
     inner class InternalLocationBroadCastReceiver : BroadcastReceiver() {
 
@@ -243,19 +231,23 @@ class MainActivity : AppCompatActivity() {
             //LANCAR NOTIFICACAO
             when (key) {
                 "headphonekey" -> {
-                    headphoneButton.text = "Headphone não está plugado"
+//                    phonetext.text = "Headphone não está plugado"
                     Toast.makeText(context, "Não está mais com o fone", Toast.LENGTH_LONG).show()
                 }
                 "walkingkey" -> {
-                    activityButton.text = "Parado"
+//                    activitytext.text = "Não está mais andando"
                     Toast.makeText(context, "Não está mais andando", Toast.LENGTH_LONG).show()
                 }
-                "homekey" -> {
-                    locationButton.text = "Não está em um local conhecido"
+                "vehiclekey" -> {
+//                    activitytext.text = "Não está mais em veículo"
+                    Toast.makeText(context, "Não está mais em veículo", Toast.LENGTH_LONG).show()
+                }
+                "homekey", "cikey" -> {
+//                    locationtext.text = "Não está em um local conhecido"
                     Toast.makeText(context, "Não está mais em casa", Toast.LENGTH_LONG).show()
                 }
                 "timefencekey" -> {
-                    timeButton.text = "Não está no horário determinado"
+//                    timetext.text = "Não está no horário determinado"
                     Toast.makeText(context, "Não está no horário determinado", Toast.LENGTH_LONG).show()
                 }
                 else -> {
@@ -269,19 +261,32 @@ class MainActivity : AppCompatActivity() {
             //LANCAR NOTIFICACAO
             when (key) {
                 "headphonekey" -> {
-                    headphoneButton.text = "Headphone está plugado"
+                    phonetext.text = "Headphone está plugado"
                     Toast.makeText(context, "Está com o fone", Toast.LENGTH_LONG).show()
+
                 }
                 "walkingkey" -> {
-                    activityButton.text = "Andando"
+                    activitytext.text = "Andando..."
                     Toast.makeText(context, "Está andando", Toast.LENGTH_LONG).show()
                 }
+                "stillkey" -> {
+                    activitytext.text = "Parado"
+                    Toast.makeText(context, "Está parado", Toast.LENGTH_LONG).show()
+                }
+                "vehiclekey" -> {
+                    activitytext.text = "Em um veículo..."
+                    Toast.makeText(context, "Está em um veículo", Toast.LENGTH_LONG).show()
+                }
                 "homekey" -> {
-                    locationButton.text = "Está em casa"
+                    locationtext.text = "Está em casa"
                     Toast.makeText(context, "Está em casa", Toast.LENGTH_LONG).show()
                 }
+                "cikey" -> {
+                    locationtext.text = "Está no CI"
+                    Toast.makeText(context, "Está no CI", Toast.LENGTH_LONG).show()
+                }
                 "timefencekey" -> {
-                    timeButton.text = "Está no horário determinado"
+                    timetext.text = "Está no horário determinado"
                     Toast.makeText(context, "Está no horário determinado", Toast.LENGTH_LONG).show()
                 }
                 else -> {
@@ -292,8 +297,7 @@ class MainActivity : AppCompatActivity() {
 
         override fun onReceive(context: Context?, intent: Intent?) {
             var state: FenceState = FenceState.extract(intent)
-            Log.d("Awareness", "Fence Receiver Received from")
-
+            Log.d("Awareness", "Fence Receiver Received from ${state.fenceKey}")
 
             when (state.currentState) {
                 FenceState.TRUE -> handleTrue(context, state.fenceKey)
