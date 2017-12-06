@@ -1,8 +1,11 @@
+<<<<<<< HEAD
 
 
 # Created by https://www.gitignore.io/api/java,android,androidstudio
 
 ### Android ###
+=======
+>>>>>>> ac7fe9b54146fa9c95d4d121edf718f4cd005125
 # Built application files
 *.apk
 *.ap_
@@ -45,13 +48,26 @@ captures/
 .idea/dictionaries
 .idea/libraries
 
+<<<<<<< HEAD
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
 
+=======
+# Keystore files
+*.jks
+
+# External native build folder generated in Android Studio 2.2 and later
+.externalNativeBuild
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+>>>>>>> ac7fe9b54146fa9c95d4d121edf718f4cd005125
 # Freeline
 freeline.py
 freeline/
 freeline_project_description.json
+<<<<<<< HEAD
 
 ### Android Patch ###
 gen-external-apklibs
@@ -180,3 +196,5 @@ fabric.properties
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 
 # End of https://www.gitignore.io/api/java,android,androidstudio
+=======
+>>>>>>> ac7fe9b54146fa9c95d4d121edf718f4cd005125
