@@ -14,13 +14,13 @@
         android:theme="@style/AppTheme">
         <meta-data
             android:name="com.google.android.awareness.API_KEY"
-            android:value="AIzaSyD8ki1uMMKYB5E4-IdBOd1hnOC74lzQKqY" />
+            android:value="<YOUR_KEY>" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyD8ki1uMMKYB5E4-IdBOd1hnOC74lzQKqY" />
+            android:value="<YOUR_KEY>" />
         <meta-data
             android:name="com.google.android.nearby.messages.API_KEY"
-            android:value="AIzaSyD8ki1uMMKYB5E4-IdBOd1hnOC74lzQKqY" />
+            android:value="<YOUR_KEY>" />
 
         <activity android:name=".MainActivity">
             <intent-filter>
